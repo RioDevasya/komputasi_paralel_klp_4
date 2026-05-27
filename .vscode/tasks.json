@@ -1,23 +1,70 @@
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "Build C with OpenMP",
-      "type": "shell",
-      "command": "gcc",
-      "args": [
-        "${file}",
-        "-o",
-        "${fileDirname}/${fileBasenameNoExtension}",
-        "-Wall",
-        "-Wextra",
-        "-g",
-        "-fopenmp"
-      ],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      }
-    }
-  ]
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Parallel: OpenMP",
+            "type": "shell",
+            "command": "mpicc",
+            "args": [
+                "-fopenmp",
+                "-g",
+                "-Wall",
+                "-Wextra",
+                "${workspaceFolder}/main_parallel.c",
+                "-o",
+                "${workspaceFolder}/main_parallel",
+                "${workspaceFolder}/utilitas.c",
+                "-I/${workspaceFolder}/include"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Build Distributed: OpenMPI",
+            "type": "shell",
+            "command": "mpicc",
+            "args": [
+                "-fopenmp",
+                "-g",
+                "-Wall",
+                "-Wextra",
+                "${workspaceFolder}/main_distributed.c",
+                "-o",
+                "${workspaceFolder}/main_distributed",
+                "${workspaceFolder}/utilitas.c",
+                "-I/${workspaceFolder}/include"
+            ],
+            "group": {
+                
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": "Build Parallel: OpenMP"
+        },
+        {
+            "label": "Build Distributed + Parallel: OpenMP + OpenMPI",
+            "type": "shell",
+            "command": "mpicc",
+            "args": [
+                "-fopenmp",
+                "-g",
+                "-Wall",
+                "-Wextra",
+                "${workspaceFolder}/distributed_and_parallel.c",
+                "-o",
+                "${workspaceFolder}/distributed_and_parallel",
+                "${workspaceFolder}/parallel.c",
+                "${workspaceFolder}/distributed.c",
+                "${workspaceFolder}/utilitas.c",
+                "-I/${workspaceFolder}/include"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": "Build Distributed: OpenMPI"
+        },
+    ]
 }
