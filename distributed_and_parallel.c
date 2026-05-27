@@ -32,6 +32,9 @@ void log_distributed_and_parallel_event(
 
 
 int main() {
+    omp_set_num_threads(2);
+
+    printf("Total thread: %d\n", omp_get_max_threads()),
     distributed_main_procedure(
         "STARTING DISTRIBUTED + PARALLEL MERGE SORT",
         "rank,thread_id,event,left,mid,right,depth,time\n",
