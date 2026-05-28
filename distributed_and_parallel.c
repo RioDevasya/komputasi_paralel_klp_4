@@ -1,3 +1,4 @@
+// Copyright (C) 2026 Kelompok 4
 #include "omp.h"
 #include "include/distributed.h"
 
@@ -14,6 +15,17 @@ void distributed_parallel_merge_sort(
     int const left, 
     int const right, 
     int const depth, 
+    FILE *log_file_ptr
+);
+
+void log_rank_0_first_divide_last_merge(
+    int const rank,
+    char const * const event, 
+    int const left, 
+    int const mid, 
+    int const right, 
+    int const depth, 
+    double const time,
     FILE *log_file_ptr
 );
 
@@ -39,6 +51,7 @@ int main() {
         "STARTING DISTRIBUTED + PARALLEL MERGE SORT",
         "rank,thread_id,event,left,mid,right,depth,time\n",
         "dis_par",
+        log_rank_0_first_divide_last_merge,
         init_distributed_parallel_merge_sort
     );
 
@@ -122,6 +135,30 @@ void distributed_parallel_merge_sort(
             log_file_ptr
         );
     }
+}
+
+void log_rank_0_first_divide_last_merge(
+    int const rank,
+    char const * const event, 
+    int const left, 
+    int const mid, 
+    int const right, 
+    int const depth, 
+    double const time,
+    FILE *log_file_ptr
+) {
+    fprintf(log_file_ptr, "%d,%d,%s,%d,%d,%d,%d,%lf\n",
+        rank,
+        omp_get_thread_num(), 
+        event, 
+        left, 
+        mid, 
+        right, 
+        depth, 
+        time
+    );
+
+    fflush(log_file_ptr);
 }
 
 void log_distributed_and_parallel_event(

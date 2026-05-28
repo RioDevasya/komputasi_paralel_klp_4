@@ -1,3 +1,4 @@
+// Copyright (C) 2026 Kelompok 4
 #include <stdlib.h>
 #include <omp.h>
 #include <mpi.h>

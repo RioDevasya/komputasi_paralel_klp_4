@@ -1,4 +1,4 @@
-# komputasi_paralel_klp_4
+# komputasi paralel kelompok 4
 <pre>
 Ramadhani Pasha Islami  2430305030009
 Berliantony Delon Usup  2430305030023
@@ -10,14 +10,18 @@ Adryan Dwislamy	        2430305030029
 <pre>
 This project is licensed under the GNU General Public License v3.0 (GPL-3.0).
 
-You are free to use, modify, and redistribute this software under the terms of the GPL-3.0 license. Any distributed modifications or derivative works must also be released under GPL-compatible terms.
+You are free to use, modify, and redistribute this software under the terms of the GPL-3.0 license. 
+Any distributed modifications or derivative works must also be released under GPL-compatible terms.
 
-This project uses OpenMP and MPI libraries for parallel and distributed computation. OpenMP and MPI implementations are distributed under their own licenses and remain subject to their respective terms.
+This project uses OpenMP and MPI libraries for parallel and distributed computation. 
+OpenMP and MPI implementations are distributed under their own licenses and remain subject to their respective terms.
 
 See the LICENSE file for details.
 </pre>
 <pre>
-sebelum dijalankan, tekan CTRL+SHIFT+B untuk build di VSCode [Build Distributed + Parallel: OpenMP + OpenMPI]. Jika manual, lihat command di task.json. Setelah build, cara menjalankan (Windows/Mac/Linux):
+sebelum dijalankan, tekan CTRL+SHIFT+B untuk build di VSCode [Build All: OpenMP, OpenMPI]. 
+Jika manual, lihat command di task.json. 
+Setelah build, cara menjalankan (Windows/Mac/Linux):
 
 ./main_parallel > output.txt 2>&1 
 mpirun -np 1 main_distributed >> output.txt 2>&1

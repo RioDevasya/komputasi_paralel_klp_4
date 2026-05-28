@@ -14,7 +14,7 @@
                 "-o",
                 "${workspaceFolder}/main_parallel",
                 "${workspaceFolder}/utilitas.c",
-                "-I/${workspaceFolder}/include"
+                "-I${workspaceFolder}/include"
             ],
             "group": {
                 "kind": "build",
@@ -34,14 +34,13 @@
                 "-o",
                 "${workspaceFolder}/main_distributed",
                 "${workspaceFolder}/utilitas.c",
-                "-I/${workspaceFolder}/include"
+                "-I${workspaceFolder}/include"
             ],
             "group": {
                 
                 "kind": "build",
                 "isDefault": true
             },
-            "dependsOn": "Build Parallel: OpenMP"
         },
         {
             "label": "Build Distributed + Parallel: OpenMP + OpenMPI",
@@ -58,13 +57,25 @@
                 "${workspaceFolder}/parallel.c",
                 "${workspaceFolder}/distributed.c",
                 "${workspaceFolder}/utilitas.c",
-                "-I/${workspaceFolder}/include"
+                "-I${workspaceFolder}/include"
             ],
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "dependsOn": "Build Distributed: OpenMPI"
         },
+        {
+            "label": "Build All: OpenMP, OpenMPI",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Build Parallel: OpenMP",
+                "Build Distributed: OpenMPI",
+                "Build Distributed + Parallel: OpenMP + OpenMPI"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
     ]
 }

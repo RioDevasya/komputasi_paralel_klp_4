@@ -1,3 +1,4 @@
+// Copyright (C) 2026 Kelompok 4
 #ifndef UTILITAS_H
 #define UTILITAS_H
 

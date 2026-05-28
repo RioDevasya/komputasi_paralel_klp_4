@@ -1,3 +1,4 @@
+// Copyright (C) 2026 Kelompok 4
 #include <stdlib.h>
 #include <mpi.h>
 #include <string.h>
@@ -20,6 +21,16 @@ void distributed_main_procedure(
     char *sort_message,
     char *log_column_header,
     char *method_name_for_filename,
+    void (*log_rank_0_first_divide_last_merge)(
+        int const rank,
+        char const *event, 
+        int const left, 
+        int const mid, 
+        int const right, 
+        int const depth, 
+        double const time,
+        FILE* log_file_ptr
+    ),
     void (*merge_sort_function)(
         char array[MAX_LINES][MAX_CHARACTERS], 
         int const left, 
@@ -148,11 +159,24 @@ void distributed_main_procedure(
         MPI_COMM_WORLD
     );
 
+    if (mpi_rank == 0)
+        log_rank_0_first_divide_last_merge(
+            mpi_rank,
+            "divide_to_workers",
+            0,
+            array_size / 2,
+            array_size,
+            0,
+            MPI_Wtime() - start,
+            log_file_ptr
+        );
+
+    // depth 1 because we already divide once
     merge_sort_function(
         local_array,
         0,
         local_size-1,
-        0,
+        1,
         log_file_ptr
     );
 
@@ -172,6 +196,7 @@ void distributed_main_procedure(
 
     // Merge final
     if (mpi_rank == 0) {
+        double start_last_merge = MPI_Wtime();
 
         merge_worker_chunks(
             array,
@@ -179,6 +204,17 @@ void distributed_main_procedure(
         );
 
         double end = MPI_Wtime();
+
+        log_rank_0_first_divide_last_merge(
+            mpi_rank,
+            "merge_worker_chunks",
+            0,
+            array_size / 2,
+            array_size,
+            0,
+            end - start_last_merge,
+            log_file_ptr
+        );
 
         write_output(
             output_filename,
