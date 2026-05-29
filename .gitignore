@@ -2,3 +2,6 @@
 main_parallel
 main_distributed
 distributed_and_parallel
+test_sorting
+
+# output

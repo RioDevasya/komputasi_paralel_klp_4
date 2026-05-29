@@ -2,7 +2,6 @@
 #include "parallel.c"
 
 int main() {
-    static struct Data data;
     char output_filename[MAX_FILENAME_LENGTH], log_filename[MAX_FILENAME_LENGTH];
     int array_size = 0;
     read_input("input.txt", data.input_array, &array_size);
@@ -29,6 +28,7 @@ int main() {
 
     parallel_main_function(
         1,
+        1,
         data.parallel_arrays[0],
         array_size,
         output_filename,
@@ -47,6 +47,7 @@ int main() {
     );
     
     parallel_main_function(
+        0,
         2,
         data.parallel_arrays[1],
         array_size,
@@ -66,6 +67,7 @@ int main() {
     );
 
     parallel_main_function(
+        0,
         4,
         data.parallel_arrays[2],
         array_size,

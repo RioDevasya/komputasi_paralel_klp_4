@@ -2,6 +2,26 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "Build Test",
+            "type": "shell",
+            "command": "gcc",
+            "args": [
+                "-fopenmp",
+                "-g",
+                "-Wall",
+                "-Wextra",
+                "${workspaceFolder}/test_sorting.c",
+                "-o",
+                "${workspaceFolder}/test_sorting",
+                "${workspaceFolder}/utilitas.c",
+                "-I${workspaceFolder}/include"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
             "label": "Build Parallel: OpenMP",
             "type": "shell",
             "command": "mpicc",
@@ -54,7 +74,6 @@
                 "${workspaceFolder}/distributed_and_parallel.c",
                 "-o",
                 "${workspaceFolder}/distributed_and_parallel",
-                "${workspaceFolder}/parallel.c",
                 "${workspaceFolder}/distributed.c",
                 "${workspaceFolder}/utilitas.c",
                 "-I${workspaceFolder}/include"
@@ -68,6 +87,7 @@
             "label": "Build All: OpenMP, OpenMPI",
             "dependsOrder": "sequence",
             "dependsOn": [
+                "Build Test",
                 "Build Parallel: OpenMP",
                 "Build Distributed: OpenMPI",
                 "Build Distributed + Parallel: OpenMP + OpenMPI"

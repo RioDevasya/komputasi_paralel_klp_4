@@ -30,4 +30,7 @@ mpirun -np 4 main_distributed >> output.txt 2>&1
 mpirun -np 1 distributed_and_parallel >> output.txt 2>&1 
 mpirun -np 2 distributed_and_parallel >> output.txt 2>&1
 mpirun -np 4 distributed_and_parallel >> output.txt 2>&1
+
+Untuk testing:
+./test_sorting
 </pre>

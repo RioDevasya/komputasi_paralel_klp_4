@@ -1,0 +1,8 @@
+rank_number,thread_number,array_size,name,sort_time,program_time
+0,1,21000,Threads 1,0.025384,0.025589
+0,2,21000,Threads 2,0.011057,0.011057
+0,4,21000,Threads 4,0.011080,0.011081
+1,1,21000,Processs 1 - Threads 1,0.014915,1.082911
+2,1,21000,Processs 2 - Threads 1,0.016670,1.059135
+1,2,21000,Processs 1 - Threads 2,0.016911,1.052006
+2,2,21000,Processs 2 - Threads 2,0.023862,1.069896

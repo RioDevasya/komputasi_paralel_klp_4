@@ -4,9 +4,9 @@
 int main() {
     distributed_main_procedure(
         "STARTING DISTRIBUTED MERGE SORT: ",
-        "rank,event,left,mid,right,depth,time\n",
+        "rank,task_created,merge_count,merge_time\n",
         "distributed",
-        log_event,
+        log_distributed_sort_event,
         distributed_merge_sort
     );
     

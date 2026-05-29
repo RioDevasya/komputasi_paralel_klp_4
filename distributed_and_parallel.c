@@ -5,39 +5,21 @@
 void init_distributed_parallel_merge_sort(
     char array[MAX_LINES][MAX_CHARACTERS], 
     int const left, 
-    int const right, 
-    int const depth, 
-    FILE *log_file_ptr
+    int const right
 );
 
 void distributed_parallel_merge_sort(
     char array[MAX_LINES][MAX_CHARACTERS], 
     int const left, 
-    int const right, 
-    int const depth, 
-    FILE *log_file_ptr
+    int const right
 );
 
-void log_rank_0_first_divide_last_merge(
-    int const rank,
-    char const * const event, 
-    int const left, 
-    int const mid, 
-    int const right, 
-    int const depth, 
-    double const time,
-    FILE *log_file_ptr
-);
-
-void log_distributed_and_parallel_event(
-    int const rank,
+void log_sort_event_paralel_distributed(
+    int const rank_number,
     int const thread_id,
-    char const * const event, 
-    int const left, 
-    int const mid, 
-    int const right, 
-    int const depth, 
-    double const time,
+    int const task_created,
+    int const merge_count, 
+    double const merge_time,
     FILE *log_file_ptr
 );
 
@@ -49,9 +31,9 @@ int main() {
     printf("Total thread: %d\n", omp_get_max_threads()),
     distributed_main_procedure(
         "STARTING DISTRIBUTED + PARALLEL MERGE SORT",
-        "rank,thread_id,event,left,mid,right,depth,time\n",
+        "rank,thread_id,task_created,merge_count,merge_time\n",
         "dis_par",
-        log_rank_0_first_divide_last_merge,
+        log_sort_event_paralel_distributed,
         init_distributed_parallel_merge_sort
     );
 
@@ -61,9 +43,7 @@ int main() {
 void init_distributed_parallel_merge_sort(
     char array[MAX_LINES][MAX_CHARACTERS], 
     int const left, 
-    int const right, 
-    int const depth, 
-    FILE *log_file_ptr
+    int const right
 ) {
     #pragma omp parallel
     {
@@ -71,9 +51,7 @@ void init_distributed_parallel_merge_sort(
         distributed_parallel_merge_sort(
             array,
             left,
-            right,
-            depth,
-            log_file_ptr
+            right
         );
     }
 }
@@ -81,106 +59,51 @@ void init_distributed_parallel_merge_sort(
 void distributed_parallel_merge_sort(
     char array[MAX_LINES][MAX_CHARACTERS], 
     int const left, 
-    int const right, 
-    int const depth, 
-    FILE *log_file_ptr
+    int const right
 ) {
     if (left < right) {
         int mid = left + (right - left) / 2;
         int do_parallel = (right - left > THRESHOLD);
-        int thread_id = omp_get_thread_num();
-
-        double divide_start = omp_get_wtime();
 
         #pragma omp taskgroup
         {
             #pragma omp task if (do_parallel)
             distributed_parallel_merge_sort(
-                array, left, mid, depth + 1, log_file_ptr
+                array, left, mid
             );
 
             #pragma omp task if (do_parallel)
             distributed_parallel_merge_sort(
-                array, mid + 1, right, depth + 1, log_file_ptr
+                array, mid + 1, right
             );
         }
 
-        double divide_end = omp_get_wtime();
-
-        log_distributed_and_parallel_event(
-            mpi_rank,
-            thread_id,
-            "divide", 
-            left, 
-            mid, 
-            right, 
-            depth, 
-            divide_end - divide_start,
-            log_file_ptr
-        );
+        int thread_id = omp_get_thread_num();
 
         double merge_start = omp_get_wtime();
         merge(array, left, mid, right);
-        double merge_end = omp_get_wtime();
 
-        log_distributed_and_parallel_event(
-            mpi_rank,
-            thread_id,
-            "merge", 
-            left, 
-            mid, 
-            right, 
-            depth, 
-            merge_end - merge_start,
-            log_file_ptr
-        );
+        threadStats[mpi_rank][thread_id].merge_time += omp_get_wtime() - merge_start;
+        threadStats[mpi_rank][thread_id].merge_count++;
+        if (do_parallel)
+            threadStats[mpi_rank][thread_id].task_created += 2;
     }
 }
 
-void log_rank_0_first_divide_last_merge(
-    int const rank,
-    char const * const event, 
-    int const left, 
-    int const mid, 
-    int const right, 
-    int const depth, 
-    double const time,
-    FILE *log_file_ptr
-) {
-    fprintf(log_file_ptr, "%d,%d,%s,%d,%d,%d,%d,%lf\n",
-        rank,
-        omp_get_thread_num(), 
-        event, 
-        left, 
-        mid, 
-        right, 
-        depth, 
-        time
-    );
-
-    fflush(log_file_ptr);
-}
-
-void log_distributed_and_parallel_event(
-    int const rank,
+void log_sort_event_paralel_distributed(
+    int const rank_number,
     int const thread_id,
-    char const * const event, 
-    int const left, 
-    int const mid, 
-    int const right, 
-    int const depth, 
-    double const time,
+    int const task_created,
+    int const merge_count, 
+    double const merge_time,
     FILE *log_file_ptr
 ) {
-    fprintf(log_file_ptr, "%d,%d,%s,%d,%d,%d,%d,%lf\n",
-        rank,
-        thread_id, 
-        event, 
-        left, 
-        mid, 
-        right, 
-        depth, 
-        time
+    fprintf(log_file_ptr, "%d,%d,%d,%d,%lf\n",
+        rank_number,
+        thread_id,
+        task_created,
+        merge_count, 
+        merge_time
     );
 
     fflush(log_file_ptr);

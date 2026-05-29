@@ -1,6 +1,7 @@
 // Copyright (C) 2026 Kelompok 4
 #include <stdlib.h>
 #include <mpi.h>
+#include <omp.h>
 #include <string.h>
 #include "include/utilitas.h"
 #include "include/distributed.h"
@@ -13,7 +14,8 @@ char output_filename[MAX_FILENAME_LENGTH],
     log_filename[MAX_FILENAME_LENGTH];
 int array_size = 0;
 FILE *log_file_ptr = NULL;
-
+FILE *log_program_event_ptr = NULL;
+struct ThreadStats threadStats[MAX_PROCESS][MAX_THREADS];
 
 
 
@@ -21,22 +23,18 @@ void distributed_main_procedure(
     char *sort_message,
     char *log_column_header,
     char *method_name_for_filename,
-    void (*log_rank_0_first_divide_last_merge)(
-        int const rank,
-        char const *event, 
-        int const left, 
-        int const mid, 
-        int const right, 
-        int const depth, 
-        double const time,
-        FILE* log_file_ptr
+    void log_sort_event(
+        int const rank_number,
+        int const thread_id,
+        int const task_created,
+        int const merge_count, 
+        double const merge_time,
+        FILE *log_file_ptr
     ),
     void (*merge_sort_function)(
         char array[MAX_LINES][MAX_CHARACTERS], 
         int const left, 
-        int const right, 
-        int const depth, 
-        FILE *log_file_ptr
+        int const right
     )
 ) {
     MPI_Init(NULL, NULL);
@@ -50,6 +48,8 @@ void distributed_main_procedure(
         MPI_COMM_WORLD,
         &mpi_process_count
     );
+
+    double end_init = MPI_Wtime();
 
     snprintf(
         log_filename, 
@@ -76,12 +76,6 @@ void distributed_main_procedure(
         );
     }
 
-    fprintf(
-        log_file_ptr,
-        "%s",
-        log_column_header
-    );
-
     if (mpi_rank == 0) {
         snprintf(
             output_filename, 
@@ -91,6 +85,19 @@ void distributed_main_procedure(
             method_name_for_filename,
             mpi_process_count
         );
+
+        log_program_event_ptr = fopen(
+            PROGRAM_EVENT_LOG_PATH,
+            "a"
+        );
+
+        if (!log_program_event_ptr) {
+            perror("Failed to open log file");
+            MPI_Abort(
+                MPI_COMM_WORLD,
+                EXIT_FAILURE
+            );
+        }
 
         read_input("input.txt", array, &array_size);
         printf(
@@ -102,6 +109,8 @@ void distributed_main_procedure(
             sort_message
         );
     }
+
+    double start_data_count = MPI_Wtime();
 
     MPI_Bcast(
         &array_size,
@@ -143,7 +152,8 @@ void distributed_main_procedure(
             EXIT_FAILURE
         );
     }
-    double start = MPI_Wtime();
+
+    double start_merge_sort = MPI_Wtime();
 
     MPI_Scatterv(
         array,
@@ -159,26 +169,14 @@ void distributed_main_procedure(
         MPI_COMM_WORLD
     );
 
-    if (mpi_rank == 0)
-        log_rank_0_first_divide_last_merge(
-            mpi_rank,
-            "divide_to_workers",
-            0,
-            array_size / 2,
-            array_size,
-            0,
-            MPI_Wtime() - start,
-            log_file_ptr
-        );
 
-    // depth 1 because we already divide once
     merge_sort_function(
         local_array,
         0,
-        local_size-1,
-        1,
-        log_file_ptr
+        local_size-1
     );
+
+    double end_merge_sort = MPI_Wtime();
 
     MPI_Gatherv(
         local_array,
@@ -203,17 +201,31 @@ void distributed_main_procedure(
             send_counts
         );
 
-        double end = MPI_Wtime();
+        double end_program = MPI_Wtime();
+        double program_time = end_program - start_data_count + end_init;
+        double sort_time = (end_program - start_last_merge) + (end_merge_sort - start_merge_sort);
 
-        log_rank_0_first_divide_last_merge(
-            mpi_rank,
-            "merge_worker_chunks",
-            0,
-            array_size / 2,
+        threadStats[mpi_rank][0].merge_time += end_program - start_last_merge;
+        threadStats[mpi_rank][0].merge_count++;
+
+        char program_name[MAX_FILENAME_LENGTH];
+
+        snprintf(
+            program_name,
+            MAX_FILENAME_LENGTH,
+            "Processs %d - Threads %d",
+            mpi_process_count,
+            omp_get_max_threads()
+        );
+
+        log_program_event(
+            mpi_process_count,
+            omp_get_max_threads(),
             array_size,
-            0,
-            end - start_last_merge,
-            log_file_ptr
+            program_name,
+            sort_time,
+            program_time,
+            log_program_event_ptr
         );
 
         write_output(
@@ -228,14 +240,32 @@ void distributed_main_procedure(
         );
 
         printf(
-            "Time taken: %.6lf seconds\n\n",
-            end-start
+            "Program time taken: %.6lf seconds\n"
+            "Sort time taken: %.6lf seconds\n\n",
+            program_time,
+            sort_time
         );
-
-        fclose(log_file_ptr);
     }
 
+    fprintf(
+        log_file_ptr,
+        "%s",
+        log_column_header
+    );
+    
+    for (int i = 0; i < max(omp_get_max_threads(), 1); i++)
+        log_sort_event(
+            mpi_rank,
+            i,
+            threadStats[mpi_rank][i].task_created,
+            threadStats[mpi_rank][i].merge_count,
+            threadStats[mpi_rank][i].merge_time,
+            log_file_ptr
+        );
+
     free(local_array);
+
+    fclose(log_file_ptr);
 
     MPI_Finalize();
 }
@@ -358,49 +388,40 @@ void merge_worker_chunks(
 void distributed_merge_sort(
     char array[MAX_LINES][MAX_CHARACTERS], 
     int const left, 
-    int const right, 
-    int const depth, 
-    FILE *log_file_ptr
+    int const right
 ) {
     if (left < right) {
         int mid = left + (right - left) / 2;
 
-        double divide_start = MPI_Wtime();
-
         distributed_merge_sort(
-            array, left, mid, depth + 1, log_file_ptr
+            array, left, mid
         );
 
         distributed_merge_sort(
-            array, mid + 1, right, depth + 1, log_file_ptr
+            array, mid + 1, right
         );
-
-        double divide_end = MPI_Wtime();
-
-        log_event(
-            mpi_rank,
-            "divide", 
-            left, 
-            mid, 
-            right, 
-            depth, 
-            divide_end - divide_start,
-            log_file_ptr
-        );
-
+        
         double merge_start = MPI_Wtime();
         merge(array, left, mid, right);
-        double merge_end = MPI_Wtime();
 
-        log_event(
-            mpi_rank,
-            "merge", 
-            left, 
-            mid, 
-            right, 
-            depth, 
-            merge_end - merge_start,
-            log_file_ptr
-        );
+        threadStats[mpi_rank][0].merge_time += MPI_Wtime() - merge_start;
+        threadStats[mpi_rank][0].merge_count++;
     }
+}
+
+void log_distributed_sort_event(
+    int const rank_number,
+    int const thread_id,
+    int const task_created,
+    int const merge_count, 
+    double const merge_time,
+    FILE *log_file_ptr
+) {
+    log_sort_event(
+        rank_number,
+        task_created,
+        merge_count,
+        merge_time,
+        log_file_ptr
+    );
 }

@@ -147,10 +147,6 @@ void merge(
 }
 
 
-void print_array(char *array[], int size) {
-    for (int i = 0; i < size; i++)
-        printf("%s\n", array[i]);
-}
 
 int compare_strings(char const* a, char const* b) {
     return strcmp(a, b);
@@ -159,24 +155,39 @@ int compare_strings(char const* a, char const* b) {
     // return strlen(a) - strlen(b); sort-by-length
 }
 
-void log_event(
+void log_sort_event(
     int const id,
-    char const * const event, 
-    int const left, 
-    int const mid, 
-    int const right, 
-    int const depth, 
-    double const time,
+    int const task_created,
+    int const merge_count, 
+    double const merge_time,
     FILE *log_file_ptr
 ) {
-    fprintf(log_file_ptr, "%d,%s,%d,%d,%d,%d,%lf\n",
+    fprintf(log_file_ptr, "%d,%d,%d,%lf\n",
         id, 
+        task_created,
+        merge_count, 
+        merge_time
+    );
+
+    fflush(log_file_ptr);
+}
+
+void log_program_event(
+    int const rank_number,
+    int const thread_number,
+    int const array_size,
+    char const * const event, 
+    double const sort_time,
+    double const program_time,
+    FILE *log_file_ptr
+) {
+    fprintf(log_file_ptr, "%d,%d,%d,%s,%lf,%lf\n",
+        rank_number,
+        thread_number, 
+        array_size,
         event, 
-        left, 
-        mid, 
-        right, 
-        depth, 
-        time
+        sort_time,
+        program_time
     );
 
     fflush(log_file_ptr);
@@ -194,3 +205,13 @@ void copy_array(
         array_size * MAX_CHARACTERS
     );
 }
+
+int min(int const a, int const b) {
+    if (a < b) return a;
+    else return b;
+};
+
+int max(int const a, int const b) {
+    if (a > b) return a;
+    else return b;
+};
