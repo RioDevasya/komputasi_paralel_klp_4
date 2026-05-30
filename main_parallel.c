@@ -1,5 +1,6 @@
 // Copyright (C) 2026 Kelompok 4
 #include "parallel.c"
+#include <string.h>
 
 int main() {
     char output_filename[MAX_FILENAME_LENGTH], log_filename[MAX_FILENAME_LENGTH];
@@ -36,6 +37,8 @@ int main() {
     );
 
     // 2 thread
+    memset(threadStats, 0, sizeof(threadStats));
+    
     give_filename_and_output_folder(
         output_filename,
         "output_parallel_2_thread.txt"
@@ -56,6 +59,8 @@ int main() {
     );
 
     // 4 thread
+    memset(threadStats, 0, sizeof(threadStats));
+    
     give_filename_and_output_folder(
         output_filename,
         "output_parallel_4_thread.txt"
