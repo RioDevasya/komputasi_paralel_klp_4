@@ -21,7 +21,7 @@ See the LICENSE file for details.
 <pre>
 sebelum dijalankan, tekan CTRL+SHIFT+B untuk build di VSCode [Build All: OpenMP, OpenMPI]. 
 Jika manual, lihat command di task.json. 
-Setelah build, cara menjalankan (Windows/Mac/Linux):
+Setelah build, cara menjalankan (Linux only):
 
 ./main_parallel > output.txt 2>&1 
 mpirun -np 1 main_distributed >> output.txt 2>&1
